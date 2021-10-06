@@ -1,0 +1,52 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Install aptitude
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install Required Packages for Docker
+      apt: name={{ item }} state=latest update_cache=yes force_apt_get=yes
+      loop: [ 'apt-transport-https' , 'ca-certificates' , 'curl' , 'software-properties-common' , 'python3-pip' , 'virtualenv' , 'python3-setuptools' ]
+
+    - name: Adding GPG key for Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Adding Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Updating the apt
+      apt: update_cache=yes
+
+    - name: Installing Docker Ce
+      apt: name=docker-ce state=latest
+
+    - name: Installing a Python package for Docker
+      pip:
+        name: docker
+
+    - name: Adding the current user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Pulling a Docker image
+      docker_image:
+        name: greengiant77/calc_api
+        source: pull
+
+    - name: Starting a Docker image
+      community.docker.docker_container:
+        name: calc_api_container
+        image: greengiant77/calc_api
+        state: started
+        client_cert: /home/kali/cyber/projects/secure_rest_api/cert/cert.pem
+        client_key: /home/kali/cyber/projects/secure_rest_api/cert/key.pem
+        ports:
+          - "5000:5000"
