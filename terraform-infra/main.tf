@@ -133,8 +133,8 @@ provider "aws" {
         rule_no    = 100
         action     = "allow"
         cidr_block = "0.0.0.0/0"
-        from_port  = 5000
-        to_port    = 5000
+        from_port  = 443
+        to_port    = 443
       }
     ingress {
         protocol   = "tcp"
@@ -249,9 +249,9 @@ provider "aws" {
     }
 
     ingress {
-      description = "5000"
-      from_port   = 5000
-      to_port     = 5000
+      description = "HTTPS"
+      from_port   = 443
+      to_port     = 443
       protocol    = "tcp"
       cidr_blocks = ["0.0.0.0/0"]
     }
@@ -369,6 +369,18 @@ provider "aws" {
     lifecycle {
       create_before_destroy = true
     }
+
+    provisioner "remote-exec" {
+      inline = [
+        "pwd"
+      ]
+    }
+
+    provisioner "local-exec" {
+      working_dir = "../ansible"
+      command = "ansible-playbook -i ${self.public_ip}, -u ubuntu playbook0.yml"
+    }
+
   }
 
   resource "aws_instance" "cyber94_calc_gswirsky_server_bastion_tf" {
