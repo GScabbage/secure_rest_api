@@ -36,42 +36,26 @@
         groups: docker
         append: yes
 
-    - name: Pulling a Docker image
-      docker_image:
-        name: greengiant77/calc_api
-        source: pull
+    - name: Copy Cert Directory
+      copy:
+        src: "{{ playbook_dir }}/../cert"
+        dest: /home/ubuntu
+        owner: ubuntu
+        group: ubuntu
+        mode: 0400
 
-
-    - name: ansible create directory example
-      file:
-        path: /home/ubuntu/cert
-        state: directory
-
-    - name: Copy cert test
-      ansible.builtin.copy:
-        src: /home/kali/cyber/projects/secure_rest_api/cert/cert.pem
-        dest: /home/ubuntu/cert/cert.pem
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Copy key
-      ansible.builtin.copy:
-        src: /home/kali/cyber/projects/secure_rest_api/cert/key.pem
-        dest: /home/ubuntu/cert/key.pem
-        owner: root
-        group: root
-        mode: '0644'
+    - name: Stop a container
+      community.docker.docker_container:
+        name: calc_api_container
+        state: stopped
 
     - name: Starting a Docker image
-      community.docker.docker_container:
+      docker_container:
         name: calc_api_container
         image: greengiant77/calc_api
         state: started
-        restart: yes
-        client_cert: /home/ubuntu/cert/cert.pem
-        client_key: /home/ubuntu/cert/key.pem
-        exposed_ports:
-          - 5000
-        ports:
-          - "5000:5000"
+        container_default_behavior: compatibility
+        published_ports:
+          - "443:5000"
+        volumes:
+          - /home/ubuntu/cert:/cert
