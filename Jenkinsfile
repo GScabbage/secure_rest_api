@@ -32,12 +32,15 @@ pipeline {
     stage('Testing the code') {
       steps {
         script {
-          sh "docker run -v $PWD/reports:/reports --workdir /app $PROJECT_DIR $REGISTRY pytest -v --junitxml=/reports/results.xml"
+          sh '''
+            docker run -v $PWD/test-results:/reports --workdir /app $PROJECT_DIR $REGISTRY pytest -v --junitxml=/reports/results.xml
+            ls -la $PWD/test-results
+          '''
         }
       }
       post {
         always{
-          junit testResults: '**/reports/*.xml'
+          junit testResults: '**/test-results/*.xml'
         }
       }
     }
