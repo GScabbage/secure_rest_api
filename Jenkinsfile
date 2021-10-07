@@ -28,6 +28,22 @@ pipeline {
         }
       }
     }
+
+    stage('Deploy to Docker Hub') {
+      steps {
+        script {
+          docker.withRegistry('', DOCKER_CREDENTIALS){
+            DOCKER_IMAGE.push()
+          }
+        }
+      }
+    }
+
+    stage('Purging Docker Image') {
+      steps {
+        sh "docker rmi $REGISTRY"
+      }
+    }
   }
 
 }
