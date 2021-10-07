@@ -16,7 +16,7 @@ pipeline {
   stages {
     stage('Cloning the code from Git') {
       steps {
-        git branch: 'main'
+        git branch: 'main',
         url: 'https://github.com/GScabbage/secure_rest_api'
       }
     }
