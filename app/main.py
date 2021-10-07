@@ -5,6 +5,7 @@ import datetime
 import sqlite3
 from contextlib import closing
 import time
+import operations
 
 SECRET_KEY = "54F192A913832BACAEDCCBBE6BE15"
 flaskapp = Flask(__name__)
@@ -130,4 +131,4 @@ def authenticate_newuser():
     return resp
 
 if __name__ == "__main__":
-    flaskapp.run(debug = True, ssl_context = ('cert/cert.pem', 'cert/key.pem'))
+    flaskapp.run(host='0.0.0.0', debug = True, ssl_context = ('cert/cert.pem', 'cert/key.pem'))
