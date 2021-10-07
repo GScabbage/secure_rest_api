@@ -33,7 +33,7 @@ pipeline {
       steps {
         script {
           sh '''
-            docker run -v $PWD/test-results:/reports --workdir /app $PROJECT_DIR $REGISTRY pytest -v --junitxml=/reports/results.xml
+            docker run --rm -v $PWD/test-results:/reports --workdir /app $PROJECT_DIR $REGISTRY pytest -v --junitxml=/reports/results.xml
             ls -la $PWD/test-results
           '''
         }
