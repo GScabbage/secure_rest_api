@@ -2,7 +2,7 @@ pipeline {
 
   environment {
     PROJECT_DIR = "/app"
-    REGISTRY = "greengiant77/calc_api"
+    REGISTRY = "greengiant77/calc_api" + ":" + "$BUILD_NUMBER"
     DOCKER_CREDENTIALS = "docker_auth"
     DOCKER_IMAGE = ""
   }
