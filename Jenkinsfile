@@ -19,6 +19,13 @@ pipeline {
         git 'https://github.com/GScabbage/secure_rest_api'
       }
     }
+
+    stage('Build Image') {
+      steps {
+        DOCKER_IMAGE = docker.build REGISTRY
+
+      }
+    }
   }
 
 }
