@@ -34,3 +34,4 @@ key.pem
 __pycache__
 .terraform.lock.hcl
 users.db
+bannedtokens.db

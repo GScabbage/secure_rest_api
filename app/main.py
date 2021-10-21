@@ -31,13 +31,38 @@ def verify_token(token):
     else:
         return False
 
+def is_token_banned(token):
+    if token:
+        with closing(sqlite3.connect("bannedtokens.db")) as connection:
+            with closing(connection.cursor()) as cursor:
+                cursor.execute("SELECT * FROM token_list WHERE token=?", (str(token),))
+                tokencheck= cursor.fetchone()
+                print(tokencheck)
+        if tokencheck != None:
+            return True
+        else:
+            return False
+    else:
+        return False
+
 @flaskapp.route('/')
 def index_page():
+    try:
+        with closing(sqlite3.connect("bannedtokens.db")) as connection:
+            with closing(connection.cursor()) as cursor:
+                cursor.execute("CREATE TABLE token_list (id INTEGER PRIMARY KEY, token TEXT);")
+                connection.commit()
+    except:
+        pass
     print(request.cookies)
     isUserLoggedIn = False
 
     if 'token' in request.cookies:
-        isUserLoggedIn = verify_token(request.cookies['token'])
+        tokenbanned=is_token_banned(request.cookies['token'])
+        if tokenbanned == False:
+            isUserLoggedIn = verify_token(request.cookies['token'])
+        else:
+            isUserLoggedIn = False
 
     if isUserLoggedIn:
         return render_template('calculator.html')
@@ -87,7 +112,11 @@ def send(sum=sum):
     isUserLoggedIn = False
 
     if 'token' in request.cookies:
-        isUserLoggedIn = verify_token(request.cookies['token'])
+        tokenbanned=is_token_banned(request.cookies['token'])
+        if tokenbanned == False:
+            isUserLoggedIn = verify_token(request.cookies['token'])
+        else:
+            isUserLoggedIn = False
 
     if isUserLoggedIn:
         return render_template('calculator.html')
@@ -157,6 +186,11 @@ def calculate_post2():
 
 @flaskapp.route('/logout')
 def logout():
+    token = request.cookies['token']
+    with closing(sqlite3.connect("bannedtokens.db")) as connection:
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(f"INSERT INTO token_list (token) VALUES (?);",(str(token),))
+            connection.commit()
     resp = make_response(render_template('logout.html'))
     resp.delete_cookie('token')
     return resp
