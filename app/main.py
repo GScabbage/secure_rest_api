@@ -44,9 +44,9 @@ def index_page():
     else:
         return render_template('main.html')
 
-@flaskapp.route('/index')
-def index2_page():
-    return render_template('index.html')
+# @flaskapp.route('/index')
+# def index2_page():
+#     return render_template('index.html')
 
 @flaskapp.route('/login')
 def login_page():#
@@ -90,35 +90,40 @@ def send(sum=sum):
         isUserLoggedIn = verify_token(request.cookies['token'])
 
     if isUserLoggedIn:
-        if request.method == 'POST':
-            num1 = request.form['num1']
-            num2 = request.form['num2']
-            operation = request.form['operation']
-
-            if operation == 'add':
-                sum = float(num1) + float(num2)
-                return render_template('calculator.html', sum=sum)
-
-            elif operation == 'subtract':
-                sum = float(num1) - float(num2)
-                return render_template('calculator.html', sum=sum)
-
-            elif operation == 'multiply':
-                sum = float(num1) * float(num2)
-                return render_template('calculator.html', sum=sum)
-
-            elif operation == 'divide':
-                if float(num2) != 0:
-                    sum = float(num1) / float(num2)
-                    return render_template('calculator.html', sum=sum)
-                else:
-                    return render_template('calculator.html', sum="That's a zero division error")
-            else:
-                return render_template('calculator.html')
-        else:
-            return render_template('calculator.html')
+        return render_template('calculator.html')
     else:
         return render_template('nocalc.html')
+
+    # if isUserLoggedIn:
+    #     if request.method == 'POST':
+    #         num1 = request.form['num1']
+    #         num2 = request.form['num2']
+    #         operation = request.form['operation']
+    #
+    #         if operation == 'add':
+    #             sum = float(num1) + float(num2)
+    #             return render_template('calculator.html', sum=sum)
+    #
+    #         elif operation == 'subtract':
+    #             sum = float(num1) - float(num2)
+    #             return render_template('calculator.html', sum=sum)
+    #
+    #         elif operation == 'multiply':
+    #             sum = float(num1) * float(num2)
+    #             return render_template('calculator.html', sum=sum)
+    #
+    #         elif operation == 'divide':
+    #             if float(num2) != 0:
+    #                 sum = float(num1) / float(num2)
+    #                 return render_template('calculator.html', sum=sum)
+    #             else:
+    #                 return render_template('calculator.html', sum="That's a zero division error")
+    #         else:
+    #             return render_template('calculator.html')
+    #     else:
+    #         return render_template('calculator.html')
+    # else:
+    #     return render_template('nocalc.html')
 
 @flaskapp.route('/newuser')
 def newlogin():
