@@ -1,4 +1,4 @@
-from flask import Flask, make_response, request, render_template
+from flask import Flask, make_response, request, render_template, redirect, jsonify
 from random import random
 import jwt
 import datetime
@@ -6,6 +6,7 @@ import sqlite3
 from contextlib import closing
 import time
 import operations
+import calc_functions as calc_functions
 
 SECRET_KEY = "54F192A913832BACAEDCCBBE6BE15"
 flaskapp = Flask(__name__)
@@ -42,6 +43,10 @@ def index_page():
         return render_template('calculator.html')
     else:
         return render_template('main.html')
+
+@flaskapp.route('/index')
+def index2_page():
+    return render_template('index.html')
 
 @flaskapp.route('/login')
 def login_page():#
@@ -113,7 +118,7 @@ def send(sum=sum):
         else:
             return render_template('calculator.html')
     else:
-        return "Please login to access this page"
+        return render_template('nocalc.html')
 
 @flaskapp.route('/newuser')
 def newlogin():
@@ -128,6 +133,27 @@ def authenticate_newuser():
     user_token = create_token(username, password)
     resp = make_response(render_template('loginredirect.html'))
     resp.set_cookie('token', user_token)
+    return resp
+
+@flaskapp.route('/calculate2', methods = ['POST'])
+def calculate_post2():
+    print(request.form)
+    number_1 = request.form.get('number_1', type = int)
+    number_2 = request.form.get('number_2', type = int)
+    operation= request.form.get('operation', type= str)
+
+    result = calc_functions.process(number_1, number_2, operation)
+
+    print(result)
+    response_data = {
+        'data': result
+    }
+    return make_response(jsonify(response_data))
+
+@flaskapp.route('/logout')
+def logout():
+    resp = make_response(render_template('logout.html'))
+    resp.delete_cookie('token')
     return resp
 
 if __name__ == "__main__":
