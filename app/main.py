@@ -14,7 +14,7 @@ flaskapp = Flask(__name__)
 def newuser(username, password):
     with closing(sqlite3.connect("users.db")) as connection:
         with closing(connection.cursor()) as cursor:
-            cursor.execute("INSERT INTO user_info (username, password) VALUES (?,?)",(username, password,))
+            cursor.execute(f"INSERT INTO user_info (username, password) VALUES (?,?);",(str(username), str(password),))
             connection.commit()
 
 def verify_token(token):
@@ -71,14 +71,14 @@ def authenticate_users():
     password = data['password']
     with closing(sqlite3.connect("users.db")) as connection:
         with closing(connection.cursor()) as cursor:
-            cursor.execute("SELECT * FROM user_info WHERE username=? and password=?", (username,password,))
+            cursor.execute("SELECT * FROM user_info WHERE username=? and password=?", (str(username),str(password),))
             udat= cursor.fetchone()
     if udat == None:
         return render_template('newaccount.html')
     else:
         user_token = create_token(username, password)
         resp = make_response(render_template('loginredirect.html'))
-        resp.set_cookie('token', user_token)
+        resp.set_cookie('token', user_token, httponly=True, secure=True, samesite='Strict')
         return resp
 
 @flaskapp.route('/calculator', methods=['POST','GET'])
@@ -132,14 +132,14 @@ def authenticate_newuser():
     newuser(username,password)
     user_token = create_token(username, password)
     resp = make_response(render_template('loginredirect.html'))
-    resp.set_cookie('token', user_token)
+    resp.set_cookie('token', user_token, httponly=True, secure=True, samesite='Strict')
     return resp
 
 @flaskapp.route('/calculate2', methods = ['POST'])
 def calculate_post2():
     print(request.form)
-    number_1 = request.form.get('number_1', type = int)
-    number_2 = request.form.get('number_2', type = int)
+    number_1 = request.form.get('number_1', type = float)
+    number_2 = request.form.get('number_2', type = float)
     operation= request.form.get('operation', type= str)
 
     result = calc_functions.process(number_1, number_2, operation)
@@ -155,6 +155,12 @@ def logout():
     resp = make_response(render_template('logout.html'))
     resp.delete_cookie('token')
     return resp
+
+@flaskapp.after_request
+def apply_caching(response):
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers['X-Content-Type-Options'] = "nosniff"
+    return response
 
 if __name__ == "__main__":
     flaskapp.run(host='0.0.0.0', debug = True, ssl_context = ('cert/cert.pem', 'cert/key.pem'))
