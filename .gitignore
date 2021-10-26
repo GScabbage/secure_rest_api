@@ -35,3 +35,7 @@ __pycache__
 .terraform.lock.hcl
 users.db
 bannedtokens.db
+threatmodel
+ThreatModel.md
+ThreatModel.md.png
+tokens.db

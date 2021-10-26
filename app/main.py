@@ -11,12 +11,14 @@ import calc_functions as calc_functions
 SECRET_KEY = "54F192A913832BACAEDCCBBE6BE15"
 flaskapp = Flask(__name__)
 
+# @component External:Guest (#guest)
+
 def newuser(username, password):
     with closing(sqlite3.connect("users.db")) as connection:
         with closing(connection.cursor()) as cursor:
             cursor.execute(f"INSERT INTO user_info (username, password) VALUES (?,?);",(str(username), str(password),))
             connection.commit()
-
+# @component CalcApp:Web:Server:TokenCheck (#tokencheck)
 def verify_token(token):
     if token:
         decoded_token = jwt.decode(token, SECRET_KEY, "HS256")
@@ -33,9 +35,9 @@ def verify_token(token):
 
 def is_token_banned(token):
     if token:
-        with closing(sqlite3.connect("bannedtokens.db")) as connection:
+        with closing(sqlite3.connect("tokens.db")) as connection:
             with closing(connection.cursor()) as cursor:
-                cursor.execute("SELECT * FROM token_list WHERE token=?", (str(token),))
+                cursor.execute("SELECT * FROM banned_tokens WHERE token=?", (str(token),))
                 tokencheck= cursor.fetchone()
                 print(tokencheck)
         if tokencheck != None:
@@ -45,12 +47,22 @@ def is_token_banned(token):
     else:
         return False
 
+# @component CalcApp:Web:Server:Main (#main)
+# @connects #guest to #main with HTTP-Get
+# @component CalcApp:Web:Server:TokenDatabase:BannedToken (#bannedtokens)
+# @connects #main to #calculator with User has valid token
+# @connects #main to #tokencheck with Validate User Token
+# @connects #tokencheck to #main with Token Validity Response
+# @connects #tokencheck to #bannedtokens with SQL Query
+# @connects #bannedtokens to #tokencheck with SQL Response
+# @connects #tokencheck to #userdb with SQL Query
+# @connects #userdb to #tokencheck with SQL Response
 @flaskapp.route('/')
 def index_page():
     try:
-        with closing(sqlite3.connect("bannedtokens.db")) as connection:
+        with closing(sqlite3.connect("tokens.db")) as connection:
             with closing(connection.cursor()) as cursor:
-                cursor.execute("CREATE TABLE token_list (id INTEGER PRIMARY KEY, token TEXT);")
+                cursor.execute("CREATE TABLE banned_tokens (id INTEGER PRIMARY KEY, token TEXT);")
                 connection.commit()
     except:
         pass
@@ -73,6 +85,8 @@ def index_page():
 # def index2_page():
 #     return render_template('index.html')
 
+# @component CalcApp:Web:Server:Login (#login)
+# @connects #main to #login with User Proceed to Login
 @flaskapp.route('/login')
 def login_page():#
     return render_template('login.html')
@@ -82,6 +96,11 @@ def create_token(username, password):
     token = jwt.encode({'user_id': 12345, 'username': username, 'expiry': str(validity)}, SECRET_KEY, "HS256")
     return token
 
+# @component CalcApp:Web:Server:Authenticate (#authenticate)
+# @connects #login to #authenticate with User Data Check
+# @component CalcApp:Web:Server:UserDatabase (#userdb)
+# @connects #authenticate to #userdb with SQL Query
+# @connects #userdb to #authenticate with SQL Response
 @flaskapp.route('/authenticate', methods = ['POST'])
 def authenticate_users():
     try:
@@ -105,7 +124,10 @@ def authenticate_users():
         resp = make_response(render_template('loginredirect.html'))
         resp.set_cookie('token', user_token, httponly=True, secure=True, samesite='Strict')
         return resp
-
+# @component CalcApp:Web:Server:Calculator (#calculator)
+# @connects #authenticate to #calculator with Successful Login so Redirects to Calculator
+# @connects #calculator to #tokencheck with Validate User Token
+# @connects #tokencheck to #calculator with Token Validity Response
 @flaskapp.route('/calculator', methods=['POST','GET'])
 def send(sum=sum):
     print(request.cookies)
@@ -154,10 +176,17 @@ def send(sum=sum):
     # else:
     #     return render_template('nocalc.html')
 
+# @component CalcApp:Web:Server:NewUser (#newuser)
+# @connects #authenticate to #newuser with User Data not in Database
+# @connects #newuser to #main with User does not wish to create new account
 @flaskapp.route('/newuser')
 def newlogin():
     return render_template('newuser.html')
 
+# @component CalcApp:Web:Server:NewUserAuthenticate (#newauth)
+# @connects #newuser to #newauth with User wishes to creat a New account
+# @connects #newauth to #userdb with SQL Insert
+# @connects #newauth to #calculator with New User redirect to Calculator
 @flaskapp.route('/newuserauthenticate', methods=['POST','GET'])
 def authenticate_newuser():
     data=request.form
@@ -169,6 +198,9 @@ def authenticate_newuser():
     resp.set_cookie('token', user_token, httponly=True, secure=True, samesite='Strict')
     return resp
 
+# @component CalcApp:Web:Server:Calculator:Operations (#operations)
+# @connects #calculator to #operations with User calculation request
+# @connects #operations to #calculator with User calculation results
 @flaskapp.route('/calculate2', methods = ['POST'])
 def calculate_post2():
     print(request.form)
@@ -184,17 +216,21 @@ def calculate_post2():
     }
     return make_response(jsonify(response_data))
 
+# @component CalcApp:Web:Server:Logout (#logout)
+# @connects #calculator to #logout with User Logout Request
+# @connects #logout to #main with Return to Main Page
 @flaskapp.route('/logout')
 def logout():
     token = request.cookies['token']
-    with closing(sqlite3.connect("bannedtokens.db")) as connection:
+    with closing(sqlite3.connect("tokens.db")) as connection:
         with closing(connection.cursor()) as cursor:
-            cursor.execute(f"INSERT INTO token_list (token) VALUES (?);",(str(token),))
+            cursor.execute(f"INSERT INTO banned_tokens (token) VALUES (?);",(str(token),))
             connection.commit()
     resp = make_response(render_template('logout.html'))
     resp.delete_cookie('token')
     return resp
 
+# @connects #logout to #bannedtokens with SQL Insert current User Token
 @flaskapp.after_request
 def apply_caching(response):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"

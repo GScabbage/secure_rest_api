@@ -13,72 +13,72 @@ provider "aws" {
   }
 
 # # 1. Create vpc
-
- resource "aws_vpc" "cyber94_calc_gswirsky_vpc_tf" {
-   cidr_block = "10.106.0.0/16"
-   tags = {
-     Name = "cyber94_calc_gswirsky_vpc"
-   }
- }
+# @component CalcApp:VPC (#vpc)
+  resource "aws_vpc" "cyber94_calc_gswirsky_vpc_tf" {
+    cidr_block = "10.106.0.0/16"
+    tags = {
+      Name = "cyber94_calc_gswirsky_vpc"
+    }
+  }
 
 # # 2. Create Internet Gateway
 
- resource "aws_internet_gateway" "cyber94_calc_gswirsky_igw_tf" {
-   vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
+  resource "aws_internet_gateway" "cyber94_calc_gswirsky_igw_tf" {
+    vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
 
 
- }
+  }
 # # 3. Create Custom Route Table
 
- resource "aws_route_table" "cyber94_calc_gswirsky_route_table_tf" {
-   vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
+  resource "aws_route_table" "cyber94_calc_gswirsky_route_table_tf" {
+    vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
 
-   route {
-     cidr_block = "0.0.0.0/0"
-     gateway_id = aws_internet_gateway.cyber94_calc_gswirsky_igw_tf.id
-   }
+    route {
+      cidr_block = "0.0.0.0/0"
+      gateway_id = aws_internet_gateway.cyber94_calc_gswirsky_igw_tf.id
+    }
 
-   route {
-     ipv6_cidr_block = "::/0"
-     gateway_id      = aws_internet_gateway.cyber94_calc_gswirsky_igw_tf.id
-   }
+    route {
+      ipv6_cidr_block = "::/0"
+      gateway_id      = aws_internet_gateway.cyber94_calc_gswirsky_igw_tf.id
+    }
 
-   tags = {
-     Name = "cyber94_calc_gswirsky_route_table"
-   }
- }
+    tags = {
+      Name = "cyber94_calc_gswirsky_route_table"
+    }
+  }
 
-# # 4. Create a Subnet
+# 4. Create a Subnet
+# @component CalcApp:VPC:Subnet (#subnet)
+  resource "aws_subnet" "cyber94_calc_gswirsky_subnet_app_tf" {
+    vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
+    cidr_block        = "10.106.1.0/24"
+    availability_zone = "eu-west-1a"
 
- resource "aws_subnet" "cyber94_calc_gswirsky_subnet_app_tf" {
-   vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
-   cidr_block        = "10.106.1.0/24"
-   availability_zone = "eu-west-1a"
+    tags = {
+      Name = "cyber94_calc_gswirsky_subnet_app"
+    }
+  }
 
-   tags = {
-     Name = "cyber94_calc_gswirsky_subnet_app"
-   }
- }
+  resource "aws_subnet" "cyber94_calc_gswirsky_subnet_db_tf" {
+    vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
+    cidr_block        = "10.106.2.0/24"
+    availability_zone = "eu-west-1a"
 
- resource "aws_subnet" "cyber94_calc_gswirsky_subnet_db_tf" {
-   vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
-   cidr_block        = "10.106.2.0/24"
-   availability_zone = "eu-west-1a"
+    tags = {
+      Name = "cyber94_calc_gswirsky_subnet_db"
+    }
+  }
 
-   tags = {
-     Name = "cyber94_calc_gswirsky_subnet_db"
-   }
- }
+  resource "aws_subnet" "cyber94_calc_gswirsky_subnet_bastion_tf" {
+    vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
+    cidr_block        = "10.106.3.0/24"
+    availability_zone = "eu-west-1a"
 
- resource "aws_subnet" "cyber94_calc_gswirsky_subnet_bastion_tf" {
-   vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
-   cidr_block        = "10.106.3.0/24"
-   availability_zone = "eu-west-1a"
-
-   tags = {
-     Name = "cyber94_calc_gswirsky_subnet_bastion"
-   }
- }
+    tags = {
+      Name = "cyber94_calc_gswirsky_subnet_bastion"
+    }
+  }
  # # 5. Associate subnet with Route Table
   resource "aws_route_table_association" "cyber94_calc_gswirsky_route_table_assoc_app_tf" {
     subnet_id      = aws_subnet.cyber94_calc_gswirsky_subnet_app_tf.id
@@ -354,6 +354,8 @@ provider "aws" {
     }
   }
 
+# @component CalcApp:Web:Server (#web_server)
+# @connect #subnet to #web_server with Network
   resource "aws_instance" "cyber94_calc_gswirsky_server_app_tf" {
     ami = "ami-0943382e114f188e8"
     instance_type = "t2.micro"
