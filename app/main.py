@@ -17,6 +17,8 @@ flaskapp = Flask(__name__)
 # @threat MITM Attack (#mitm)
 # @threat Token Forgery (#faketoken)
 # @threat Token Theft (#stolentoken)
+# @threat Clickjack Attack (#clickjack)
+# @threat MIME Sniffing (#mime)
 def newuser(username, password):
     with closing(sqlite3.connect("users.db")) as connection:
         with closing(connection.cursor()) as cursor:
@@ -251,3 +253,5 @@ if __name__ == "__main__":
 # @exposes #calculator to #faketoken with forging fake tokens
 # @mitigates #login against #sqli with entering information to database as strings in a tuple so SQL code cannot be run by accident
 # @mitigates #newuser against #sqli with entering information to database as strings in a tuple so SQL code cannot be run by accident
+# @mitigates CalcApp:Web:Server against #clickjack with X-Frame options response header
+# @mitigates CalcApp:Web:Server against #mime with X-Frame no sniff option enabled
