@@ -2,6 +2,16 @@ provider "aws" {
   region=var.var_region
 }
 
+terraform {
+  backend "s3"{
+    bucket = "cyber94-gwwirsky-bucket"
+    key = "tfstate/calc/terraform.tfstate"
+    region = "eu-west-1"
+    dynamodb_table = "cyber94_calculator_gswirsky_dynamodb_table_lock"
+    encrypt = true
+  }
+}
+
 module "VPC" {
   source = "./modules/VPC"
 }
