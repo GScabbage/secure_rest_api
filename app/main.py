@@ -57,7 +57,7 @@ def is_token_banned(token):
 # @component CalcApp:Web:Server:Main (#main)
 # @connects #guest to #main with HTTPS-Get
 # @connects #main to #guest with HTTPS-Get
-# @component CalcApp:Web:Server:TokenDatabase:BannedToken (#bannedtokens)
+# @component CalcApp:Database:TokenDatabase:BannedToken (#bannedtokens)
 # @connects #main to #calculator with User has valid token
 # @connects #main to #tokencheck with Validate User Token
 # @connects #tokencheck to #main with Token Validity Response
@@ -108,7 +108,7 @@ def create_token(username, password):
 
 # @component CalcApp:Web:Server:Authenticate (#authenticate)
 # @connects #login to #authenticate with User Data Check
-# @component CalcApp:Web:Server:UserDatabase (#userdb)
+# @component CalcApp:Database:UserDatabase (#userdb)
 # @connects #authenticate to #userdb with SQL Query
 # @connects #userdb to #authenticate with SQL Response
 # @connects #authenticate to #guest with HTTPS-GET
