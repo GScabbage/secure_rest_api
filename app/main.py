@@ -55,7 +55,8 @@ def is_token_banned(token):
         return False
 
 # @component CalcApp:Web:Server:Main (#main)
-# @connects #guest to #main with HTTP-Get
+# @connects #guest to #main with HTTPS-Get
+# @connects #main to #guest with HTTPS-Get
 # @component CalcApp:Web:Server:TokenDatabase:BannedToken (#bannedtokens)
 # @connects #main to #calculator with User has valid token
 # @connects #main to #tokencheck with Validate User Token
@@ -94,6 +95,8 @@ def index_page():
 
 # @component CalcApp:Web:Server:Login (#login)
 # @connects #main to #login with User Proceed to Login
+# @connects #guest to #login with HTTPS-GET
+# @connects #login to #guest with HTTPS-GET
 @flaskapp.route('/login')
 def login_page():#
     return render_template('login.html')
@@ -108,6 +111,7 @@ def create_token(username, password):
 # @component CalcApp:Web:Server:UserDatabase (#userdb)
 # @connects #authenticate to #userdb with SQL Query
 # @connects #userdb to #authenticate with SQL Response
+# @connects #authenticate to #guest with HTTPS-GET
 @flaskapp.route('/authenticate', methods = ['POST'])
 def authenticate_users():
     try:
@@ -135,6 +139,8 @@ def authenticate_users():
 # @connects #authenticate to #calculator with Successful Login so Redirects to Calculator
 # @connects #calculator to #tokencheck with Validate User Token
 # @connects #tokencheck to #calculator with Token Validity Response
+# @connects #guest to #calculator with HTTPS-GET
+# @connects #calculator to #guest with HTTPS-GET
 @flaskapp.route('/calculator', methods=['POST','GET'])
 def send(sum=sum):
     print(request.cookies)
@@ -186,6 +192,8 @@ def send(sum=sum):
 # @component CalcApp:Web:Server:NewUser (#newuser)
 # @connects #authenticate to #newuser with User Data not in Database
 # @connects #newuser to #main with User does not wish to create new account
+# @connects #guest to #newuser with HTTPS-GET
+# @connects #newuser to #guest with HTTPS-GET
 @flaskapp.route('/newuser')
 def newlogin():
     return render_template('newuser.html')
@@ -194,6 +202,7 @@ def newlogin():
 # @connects #newuser to #newauth with User wishes to creat a New account
 # @connects #newauth to #userdb with SQL Insert
 # @connects #newauth to #calculator with New User redirect to Calculator
+# @connects #newauth to #guest with HTTPS-GET
 @flaskapp.route('/newuserauthenticate', methods=['POST','GET'])
 def authenticate_newuser():
     data=request.form
@@ -226,6 +235,7 @@ def calculate_post2():
 # @component CalcApp:Web:Server:Logout (#logout)
 # @connects #calculator to #logout with User Logout Request
 # @connects #logout to #main with Return to Main Page
+# @connects #logout to #guest with HTTPS-GET
 @flaskapp.route('/logout')
 def logout():
     token = request.cookies['token']
