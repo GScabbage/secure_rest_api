@@ -12,12 +12,17 @@ SECRET_KEY = "54F192A913832BACAEDCCBBE6BE15"
 flaskapp = Flask(__name__)
 
 # @component External:Guest (#guest)
-
+# @threat SQL Injection (#sqli)
+# @threat DDOS Attack  (#ddos)
+# @threat MITM Attack (#mitm)
+# @threat Token Forgery (#faketoken)
+# @threat Token Theft (#stolentoken)
 def newuser(username, password):
     with closing(sqlite3.connect("users.db")) as connection:
         with closing(connection.cursor()) as cursor:
             cursor.execute(f"INSERT INTO user_info (username, password) VALUES (?,?);",(str(username), str(password),))
             connection.commit()
+
 # @component CalcApp:Web:Server:TokenCheck (#tokencheck)
 def verify_token(token):
     if token:
@@ -239,3 +244,10 @@ def apply_caching(response):
 
 if __name__ == "__main__":
     flaskapp.run(host='0.0.0.0', debug = True, ssl_context = ('cert/cert.pem', 'cert/key.pem'))
+# @exposes CalcApp:Web:Server to DDOS Attack with flooding the servers with too many requests
+# @mitigates #main against #stolentoken with checking token with previously assigned tokens database
+# @mitigates #calculator against #stolentoken with checking token with previously assigned tokens database
+# @exposes #main to #faketoken with forging fake tokens
+# @exposes #calculator to #faketoken with forging fake tokens
+# @mitigates #login against #sqli with entering information to database as strings in a tuple so SQL code cannot be run by accident
+# @mitigates #newuser against #sqli with entering information to database as strings in a tuple so SQL code cannot be run by accident

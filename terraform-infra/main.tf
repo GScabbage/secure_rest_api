@@ -13,7 +13,9 @@ provider "aws" {
   }
 
 # # 1. Create vpc
+# @component Dev:PC (#devpc)
 # @component CalcApp:VPC (#vpc)
+
   resource "aws_vpc" "cyber94_calc_gswirsky_vpc_tf" {
     cidr_block = "10.106.0.0/16"
     tags = {
@@ -22,14 +24,16 @@ provider "aws" {
   }
 
 # # 2. Create Internet Gateway
-
+# @component CalcApp:VPC:InternetGateway (#ig)
   resource "aws_internet_gateway" "cyber94_calc_gswirsky_igw_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
 
 
   }
 # # 3. Create Custom Route Table
-
+# @component CalcApp:VPC:Route Table (#rt)
+# @connects #rt to #ig with Network Traffic
+# @connects #ig to #rt with Network Traffic
   resource "aws_route_table" "cyber94_calc_gswirsky_route_table_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
 
@@ -49,7 +53,9 @@ provider "aws" {
   }
 
 # 4. Create a Subnet
-# @component CalcApp:VPC:Subnet (#subnet)
+# @component CalcApp:VPC:Subnet:App (#subnetapp)
+# @connects #rt to #subnetapp with Network Traffic
+# @connects #subnetapp to #rt with Network Traffic
   resource "aws_subnet" "cyber94_calc_gswirsky_subnet_app_tf" {
     vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     cidr_block        = "10.106.1.0/24"
@@ -60,6 +66,7 @@ provider "aws" {
     }
   }
 
+# @component CalcApp:VPC:Subnet:Database (#subnetdb)
   resource "aws_subnet" "cyber94_calc_gswirsky_subnet_db_tf" {
     vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     cidr_block        = "10.106.2.0/24"
@@ -70,6 +77,9 @@ provider "aws" {
     }
   }
 
+# @component CalcApp:VPC:Subnet:Bastion (#subnetbs)
+# @connects #rt to #subnetbs with Network Traffic
+# @connects #subnetbs to #rt with Network Traffic
   resource "aws_subnet" "cyber94_calc_gswirsky_subnet_bastion_tf" {
     vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     cidr_block        = "10.106.3.0/24"
@@ -90,6 +100,9 @@ provider "aws" {
     route_table_id = aws_route_table.cyber94_calc_gswirsky_route_table_tf.id
   }
 
+# @component CalcApp:VPC:NACL:App (#naclapp)
+# @connects #subnetapp to #naclapp with Are Packets allowed query
+# @connects #naclapp to #subnetapp with Are Packets allowed response
   resource "aws_network_acl" "cyber94_calc_gswirsky_nacl_app_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     subnet_ids = [aws_subnet.cyber94_calc_gswirsky_subnet_app_tf.id]
@@ -157,6 +170,9 @@ provider "aws" {
     }
   }
 
+# @component CalcApp:VPC:NACL:Bastion (#naclbs)
+# @connects #subnetbs to #naclapp with Are Packets allowed query
+# @connects #naclapp to #subnetbs with Are Packets allowed response
   resource "aws_network_acl" "cyber94_calc_gswirsky_nacl_bastion_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     subnet_ids      = [aws_subnet.cyber94_calc_gswirsky_subnet_bastion_tf.id]
@@ -200,6 +216,9 @@ provider "aws" {
     }
   }
 
+# @component CalcApp:VPC:NACL:Database (#nacldb)
+# @connects #subnetdb to #nacldb with Are Packets allowed query
+# @connects #nacldb to #subnetdb with Are Packets allowed response
   resource "aws_network_acl" "cyber94_calc_gswirsky_nacl_db_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     subnet_ids = [aws_subnet.cyber94_calc_gswirsky_subnet_db_tf.id]
@@ -235,6 +254,7 @@ provider "aws" {
   }
 
  # # 6. Create Security Group to allow port 22,80,443
+# @component CalcApp:VPC:SecurityGroup:App (#sgapp)
   resource "aws_security_group" "cyber94_calc_gswirsky_sg_app_tf" {
 #    name        = "allow_web_traffic"
 #    description = "Allow Web inbound traffic"
@@ -281,7 +301,7 @@ provider "aws" {
       Name = "cyber94_calc_gswirsky_sg_app"
     }
   }
-
+# @component CalcApp:VPC:SecurityGroup:Bastion (#sgbs)
   resource "aws_security_group" "cyber94_calc_gswirsky_sg_bastion_tf" {
 #    name        = "allow_web_traffic"
 #    description = "Allow Web inbound traffic"
@@ -322,6 +342,7 @@ provider "aws" {
     }
   }
 
+# @component CalcApp:VPC:SecurityGroup:Database (#sgdb)
   resource "aws_security_group" "cyber94_calc_gswirsky_sg_db_tf" {
 #    name        = "allow_web_traffic"
 #    description = "Allow Web inbound traffic"
@@ -355,7 +376,11 @@ provider "aws" {
   }
 
 # @component CalcApp:Web:Server (#web_server)
-# @connect #subnet to #web_server with Network
+# @connects #web_server to #subnetapp with Network Traffic
+# @connects #subnetapp to #web_server with Network Traffic
+# @connects #web_server to #sgapp with Is connection allowed query
+# @connects #sgapp to #web_server with Is connection allowed response
+# @connects #devpc to #web_server with SSH Connection
   resource "aws_instance" "cyber94_calc_gswirsky_server_app_tf" {
     ami = "ami-0943382e114f188e8"
     instance_type = "t2.micro"
@@ -384,7 +409,14 @@ provider "aws" {
     }
 
   }
-
+# @component CalcApp:Bastion (#bastion)
+# @connects #bastion to #subnetbs with Network Traffic
+# @connects #subnetbs to #bastion with Network Traffic
+# @connects #bastion to #sgbs with Is connection allowed query
+# @connects #sgbs to #bastion with Is connection allowed response
+# @connects #bastion to #subnetbs with SSH Connection
+# @connects #subnetbs to #subnetdb with SSH Connection
+# @connects #devpc to #bastion with SSH Connection
   resource "aws_instance" "cyber94_calc_gswirsky_server_bastion_tf" {
     ami = "ami-0943382e114f188e8"
     instance_type = "t2.micro"
@@ -401,7 +433,10 @@ provider "aws" {
       create_before_destroy = true
     }
   }
-
+# @component CalcApp:Database (#db)
+# @connects #subnetdb to #db with SSH Connection
+# @connects #db to #sgdb with Is connection allowed query
+# @connects #sgdb to #db with Is connection allowed response
   resource "aws_instance" "cyber94_calc_gswirsky_server_db_tf" {
     ami = "ami-0d1c7c4de1f4cdc9a"
     instance_type = "t2.micro"
