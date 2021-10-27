@@ -14,8 +14,9 @@ provider "aws" {
 
 # # 1. Create vpc
 # @component Dev:PC (#devpc)
+# @threat Dev PC Compromised (#devthreat)
+# @mitigates #devpc against #devthreat with strong password and security on dev pc as well as ability to remotely wipe if pc is misplaced or stolen
 # @component CalcApp:VPC (#vpc)
-
   resource "aws_vpc" "cyber94_calc_gswirsky_vpc_tf" {
     cidr_block = "10.106.0.0/16"
     tags = {
