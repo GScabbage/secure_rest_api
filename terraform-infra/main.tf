@@ -55,8 +55,6 @@ provider "aws" {
 
 # 4. Create a Subnet
 # @component CalcApp:VPC:Subnet:App (#subnetapp)
-# @connects #rt to #subnetapp with Network Traffic
-# @connects #subnetapp to #rt with Network Traffic
   resource "aws_subnet" "cyber94_calc_gswirsky_subnet_app_tf" {
     vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     cidr_block        = "10.106.1.0/24"
@@ -79,8 +77,7 @@ provider "aws" {
   }
 
 # @component CalcApp:VPC:Subnet:Bastion (#subnetbs)
-# @connects #rt to #subnetbs with Network Traffic
-# @connects #subnetbs to #rt with Network Traffic
+
   resource "aws_subnet" "cyber94_calc_gswirsky_subnet_bastion_tf" {
     vpc_id            = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     cidr_block        = "10.106.3.0/24"
@@ -102,8 +99,10 @@ provider "aws" {
   }
 
 # @component CalcApp:VPC:NACL:App (#naclapp)
-# @connects #subnetapp to #naclapp with Are Packets allowed query
-# @connects #naclapp to #subnetapp with Are Packets allowed response
+# @connects #subnetapp to #naclapp with Network Traffic
+# @connects #naclapp to #subnetapp with Network Traffic
+# @connects #rt to #naclapp with Network Traffic
+# @connects #naclapp to #rt with Network Traffic
   resource "aws_network_acl" "cyber94_calc_gswirsky_nacl_app_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     subnet_ids = [aws_subnet.cyber94_calc_gswirsky_subnet_app_tf.id]
@@ -172,8 +171,10 @@ provider "aws" {
   }
 
 # @component CalcApp:VPC:NACL:Bastion (#naclbs)
-# @connects #subnetbs to #naclapp with Are Packets allowed query
-# @connects #naclapp to #subnetbs with Are Packets allowed response
+# @connects #subnetbs to #naclbs with Network Traffic
+# @connects #naclbs to #subnetbs with Network Traffic
+# @connects #rt to #naclbs with Network Traffic
+# @connects #naclbs to #rt with Network Traffic
   resource "aws_network_acl" "cyber94_calc_gswirsky_nacl_bastion_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     subnet_ids      = [aws_subnet.cyber94_calc_gswirsky_subnet_bastion_tf.id]
@@ -218,8 +219,11 @@ provider "aws" {
   }
 
 # @component CalcApp:VPC:NACL:Database (#nacldb)
-# @connects #subnetdb to #nacldb with Are Packets allowed query
-# @connects #nacldb to #subnetdb with Are Packets allowed response
+# @connects #subnetdb to #nacldb with Network Traffic
+# @connects #nacldb to #subnetdb with Network Traffic
+# @connects #naclbs to #nacldb with SSH Connection
+# @connects #naclapp to #nacldb with SQL Request
+# @connects #nacldb to #naclapp with SQL Response
   resource "aws_network_acl" "cyber94_calc_gswirsky_nacl_db_tf" {
     vpc_id = aws_vpc.cyber94_calc_gswirsky_vpc_tf.id
     subnet_ids = [aws_subnet.cyber94_calc_gswirsky_subnet_db_tf.id]
@@ -377,10 +381,10 @@ provider "aws" {
   }
 
 # @component CalcApp:Web:Server (#web_server)
-# @connects #web_server to #subnetapp with Network Traffic
-# @connects #subnetapp to #web_server with Network Traffic
-# @connects #web_server to #sgapp with Is connection allowed query
-# @connects #sgapp to #web_server with Is connection allowed response
+# @connects #sgapp to #subnetapp with Network Traffic
+# @connects #subnetapp to #sgapp with Network Traffic
+# @connects #web_server to #sgapp with Network Traffic
+# @connects #sgapp to #web_server with Network Traffic
 # @connects #devpc to #web_server with SSH Connection
   resource "aws_instance" "cyber94_calc_gswirsky_server_app_tf" {
     ami = "ami-0943382e114f188e8"
@@ -411,12 +415,10 @@ provider "aws" {
 
   }
 # @component CalcApp:Bastion (#bastion)
-# @connects #bastion to #subnetbs with Network Traffic
-# @connects #subnetbs to #bastion with Network Traffic
-# @connects #bastion to #sgbs with Is connection allowed query
-# @connects #sgbs to #bastion with Is connection allowed response
-# @connects #bastion to #subnetbs with SSH Connection
-# @connects #subnetbs to #subnetdb with SSH Connection
+# @connects #bastion to #sgbs with Network Traffic
+# @connects #sgbs to #bastion with Network Traffic
+# @connects #subnetbs to #sgbs with Network Traffic
+# @connects #sgbs to #subnetbs with Network Traffic
 # @connects #devpc to #bastion with SSH Connection
   resource "aws_instance" "cyber94_calc_gswirsky_server_bastion_tf" {
     ami = "ami-0943382e114f188e8"
@@ -435,9 +437,13 @@ provider "aws" {
     }
   }
 # @component CalcApp:Database (#db)
-# @connects #subnetdb to #db with SSH Connection
-# @connects #db to #sgdb with Is connection allowed query
-# @connects #sgdb to #db with Is connection allowed response
+# @connects #bastion to #db with SSH Connection port 22
+# @connects #db to #sgdb with Network Traffic
+# @connects #sgdb to #db with Is Network Traffic
+# @connects #subnetdb to #sgdb with Network Traffic
+# @connects #sgdb to #subnetdb with Is Network Traffic
+# @connects #web_server to #db with SQL Connection port 3306
+# @connects #db to #web_server with SQL Connection port 3306
   resource "aws_instance" "cyber94_calc_gswirsky_server_db_tf" {
     ami = "ami-0d1c7c4de1f4cdc9a"
     instance_type = "t2.micro"

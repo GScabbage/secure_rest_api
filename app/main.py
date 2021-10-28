@@ -72,8 +72,8 @@ def is_token_banned(token):
 # @connects #tokencheck to #userdb with SQL Query
 # @connects #userdb to #tokencheck with SQL Response
 # @component CalcApp:Web:Server:Calculator:NotLogged (#nocalc)
-# @connects #user to #nocalc with HTTPS-Get
-# @connects #nocalc to #user with HTTPS-Get
+# @connects #guest to #nocalc with HTTPS-Get
+# @connects #nocalc to #guest with HTTPS-Get
 @flaskapp.route('/')
 def index_page():
     try:
@@ -198,11 +198,11 @@ def send(sum=sum):
     # else:
     #     return render_template('nocalc.html')
 
-# @component CalcApp:Web:Server:NewUser (#newuser)
+# @component CalcApp:Web:Server:NewUserCreate (#newuser)
 # @connects #authenticate to #newuser with User Data not in Database
 # @connects #newuser to #main with User does not wish to create new account
-# @connects #user to #newuser with HTTPS-POST
-# @connects #newuser to #user with HTTPS-POST
+# @connects #guest to #newuser with HTTPS-POST
+# @connects #newuser to #guest with HTTPS-POST
 @flaskapp.route('/newuser')
 def newlogin():
     return render_template('newuser.html')
@@ -211,7 +211,7 @@ def newlogin():
 # @connects #newuser to #newauth with User wishes to creat a New account
 # @connects #newauth to #userdb with SQL Insert
 # @connects #newauth to #calculator with New User redirect to Calculator
-# @connects #newauth to #user with HTTPS-GET
+# @connects #newauth to #guest with HTTPS-GET
 @flaskapp.route('/newuserauthenticate', methods=['POST','GET'])
 def authenticate_newuser():
     data=request.form
