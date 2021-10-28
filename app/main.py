@@ -11,7 +11,9 @@ import calc_functions as calc_functions
 SECRET_KEY = "54F192A913832BACAEDCCBBE6BE15"
 flaskapp = Flask(__name__)
 
+# @component External:User (#user)
 # @component External:Guest (#guest)
+# @component CalcApp:Web:Server (#server)
 # @threat SQL Injection (#sqli)
 # @threat DDOS Attack  (#ddos)
 # @threat MITM Attack (#mitm)
@@ -19,6 +21,8 @@ flaskapp = Flask(__name__)
 # @threat Token Theft (#stolentoken)
 # @threat Clickjack Attack (#clickjack)
 # @threat MIME Sniffing (#mime)
+# @threat Brute Force Attack (#brute)
+# @threat Rainbow Table Attack (#rainbow)
 def newuser(username, password):
     with closing(sqlite3.connect("users.db")) as connection:
         with closing(connection.cursor()) as cursor:
@@ -55,6 +59,8 @@ def is_token_banned(token):
         return False
 
 # @component CalcApp:Web:Server:Main (#main)
+# @connects #user to #main with HTTPS-Get
+# @connects #main to #user with HTTPS-Get
 # @connects #guest to #main with HTTPS-Get
 # @connects #main to #guest with HTTPS-Get
 # @component CalcApp:Database:TokenDatabase:BannedToken (#bannedtokens)
@@ -65,6 +71,9 @@ def is_token_banned(token):
 # @connects #bannedtokens to #tokencheck with SQL Response
 # @connects #tokencheck to #userdb with SQL Query
 # @connects #userdb to #tokencheck with SQL Response
+# @component CalcApp:Web:Server:Calculator:NotLogged (#nocalc)
+# @connects #user to #nocalc with HTTPS-Get
+# @connects #nocalc to #user with HTTPS-Get
 @flaskapp.route('/')
 def index_page():
     try:
@@ -95,8 +104,8 @@ def index_page():
 
 # @component CalcApp:Web:Server:Login (#login)
 # @connects #main to #login with User Proceed to Login
-# @connects #guest to #login with HTTPS-GET
-# @connects #login to #guest with HTTPS-GET
+# @connects #user to #login with HTTPS-POST
+# @connects #login to #user with HTTPS-POST
 @flaskapp.route('/login')
 def login_page():#
     return render_template('login.html')
@@ -111,7 +120,7 @@ def create_token(username, password):
 # @component CalcApp:Database:UserDatabase (#userdb)
 # @connects #authenticate to #userdb with SQL Query
 # @connects #userdb to #authenticate with SQL Response
-# @connects #authenticate to #guest with HTTPS-GET
+# @connects #authenticate to #user with HTTPS-GET
 @flaskapp.route('/authenticate', methods = ['POST'])
 def authenticate_users():
     try:
@@ -139,8 +148,8 @@ def authenticate_users():
 # @connects #authenticate to #calculator with Successful Login so Redirects to Calculator
 # @connects #calculator to #tokencheck with Validate User Token
 # @connects #tokencheck to #calculator with Token Validity Response
-# @connects #guest to #calculator with HTTPS-GET
-# @connects #calculator to #guest with HTTPS-GET
+# @connects #user to #calculator with HTTPS-POST
+# @connects #calculator to #user with HTTPS-POST
 @flaskapp.route('/calculator', methods=['POST','GET'])
 def send(sum=sum):
     print(request.cookies)
@@ -192,8 +201,8 @@ def send(sum=sum):
 # @component CalcApp:Web:Server:NewUser (#newuser)
 # @connects #authenticate to #newuser with User Data not in Database
 # @connects #newuser to #main with User does not wish to create new account
-# @connects #guest to #newuser with HTTPS-GET
-# @connects #newuser to #guest with HTTPS-GET
+# @connects #user to #newuser with HTTPS-POST
+# @connects #newuser to #user with HTTPS-POST
 @flaskapp.route('/newuser')
 def newlogin():
     return render_template('newuser.html')
@@ -202,7 +211,7 @@ def newlogin():
 # @connects #newuser to #newauth with User wishes to creat a New account
 # @connects #newauth to #userdb with SQL Insert
 # @connects #newauth to #calculator with New User redirect to Calculator
-# @connects #newauth to #guest with HTTPS-GET
+# @connects #newauth to #user with HTTPS-GET
 @flaskapp.route('/newuserauthenticate', methods=['POST','GET'])
 def authenticate_newuser():
     data=request.form
@@ -235,7 +244,7 @@ def calculate_post2():
 # @component CalcApp:Web:Server:Logout (#logout)
 # @connects #calculator to #logout with User Logout Request
 # @connects #logout to #main with Return to Main Page
-# @connects #logout to #guest with HTTPS-GET
+# @connects #logout to #user with HTTPS-GET
 @flaskapp.route('/logout')
 def logout():
     token = request.cookies['token']
@@ -256,12 +265,14 @@ def apply_caching(response):
 
 if __name__ == "__main__":
     flaskapp.run(host='0.0.0.0', debug = True, ssl_context = ('cert/cert.pem', 'cert/key.pem'))
-# @exposes CalcApp:Web:Server to DDOS Attack with flooding the servers with too many requests
+# @exposes #server to DDOS Attack with flooding the servers with too many requests
 # @mitigates #main against #stolentoken with checking token with previously assigned tokens database
 # @mitigates #calculator against #stolentoken with checking token with previously assigned tokens database
 # @exposes #main to #faketoken with forging fake tokens
 # @exposes #calculator to #faketoken with forging fake tokens
 # @mitigates #login against #sqli with entering information to database as strings in a tuple so SQL code cannot be run by accident
 # @mitigates #newuser against #sqli with entering information to database as strings in a tuple so SQL code cannot be run by accident
-# @mitigates CalcApp:Web:Server against #clickjack with X-Frame options response header
-# @mitigates CalcApp:Web:Server against #mime with X-Frame no sniff option enabled
+# @mitigates #server against #clickjack with X-Frame options response header
+# @mitigates #server against #mime with X-Frame no sniff option enabled
+# @exposes #login to #brute with attacker attempting to get in with brute force
+# @exposes #login to #rainbow with attacker attempting to gain access using a rainbow table attack
