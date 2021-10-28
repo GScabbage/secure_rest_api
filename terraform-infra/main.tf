@@ -15,6 +15,7 @@ provider "aws" {
 # # 1. Create vpc
 # @component Dev:PC (#devpc)
 # @threat Dev PC Compromised (#devthreat)
+# @threat Unauthorised SSH Attemp (#evilssh)
 # @mitigates #devpc against #devthreat with strong password and security on dev pc as well as ability to remotely wipe if pc is misplaced or stolen
 # @component CalcApp:VPC (#vpc)
   resource "aws_vpc" "cyber94_calc_gswirsky_vpc_tf" {
@@ -420,6 +421,8 @@ provider "aws" {
 # @connects #subnetbs to #sgbs with Network Traffic
 # @connects #sgbs to #subnetbs with Network Traffic
 # @connects #devpc to #bastion with SSH Connection
+# @mitigates #bastion against #evilssh with NACL and Security Group IP Check
+# @mitigates #web_server against #evilssh with NACL and Security Group IP Check
   resource "aws_instance" "cyber94_calc_gswirsky_server_bastion_tf" {
     ami = "ami-0943382e114f188e8"
     instance_type = "t2.micro"

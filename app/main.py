@@ -23,6 +23,7 @@ flaskapp = Flask(__name__)
 # @threat MIME Sniffing (#mime)
 # @threat Brute Force Attack (#brute)
 # @threat Rainbow Table Attack (#rainbow)
+# @connects #guest to #user with Guest has created new account or logged in
 def newuser(username, password):
     with closing(sqlite3.connect("users.db")) as connection:
         with closing(connection.cursor()) as cursor:
